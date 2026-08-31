@@ -1,6 +1,7 @@
 package com.example.googoose.ui.settings
 
 import android.provider.OpenableColumns
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
@@ -66,13 +68,16 @@ private val languageOptions = listOf(Language.EN to "English", Language.ZH_CN to
  * Full-screen Settings overlay, backed by Room via [viewModel] (Phase 2).
  * Export/Import round-trip the full dataset — transactions, stock, todos,
  * categories, business name, currency, language. Import is a full replace,
- * so it's gated behind a confirmation dialog (below).
+ * so it's gated behind a confirmation dialog (below). About is a nested
+ * sub-page (local state, not the app's global overlay stack) since it's a
+ * detail view of Settings, not a sibling of it.
  */
 @Composable
 fun SettingsScreen(state: GooGooseUiState, strings: Strings, viewModel: GooGooseViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showImportConfirm by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -94,107 +99,126 @@ fun SettingsScreen(state: GooGooseUiState, strings: Strings, viewModel: GooGoose
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(GooGooseColors.background)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            GhostIconButton(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onClick = viewModel::closeSettings)
-            Text(strings.settingsTitle, style = GooGooseType.headerBrand, color = GooGooseColors.text)
-        }
-        HorizontalDivider(color = GooGooseColors.divider, thickness = 1.dp)
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Column {
-                FieldLabel(strings.businessNameLabel)
-                GooGooseTextField(
-                    value = state.settingsName,
-                    onValueChange = viewModel::setSettingsName,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Column {
-                FieldLabel(strings.currencyLabel)
-                DropdownField(
-                    selectedLabel = currencyOptions.first { it.first == state.settingsCurrency }.second,
-                    options = currencyOptions,
-                    onSelect = viewModel::setSettingsCurrency,
-                )
-            }
-            Column {
-                FieldLabel(strings.languageLabel)
-                DropdownField(
-                    selectedLabel = languageOptions.first { it.first == state.language }.second,
-                    options = languageOptions,
-                    onSelect = viewModel::setSettingsLanguage,
-                )
-            }
-            Column {
-                FieldLabel(strings.textSizeLabel)
-                val textSizeOptions = listOf(
-                    TextSizePreset.SMALL to strings.textSizeSmall,
-                    TextSizePreset.STANDARD to strings.textSizeStandard,
-                    TextSizePreset.LARGE to strings.textSizeLarge,
-                )
-                DropdownField(
-                    selectedLabel = textSizeOptions.first { it.first == state.textSize }.second,
-                    options = textSizeOptions,
-                    onSelect = viewModel::setTextSize,
-                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(GooGooseColors.background)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                GhostIconButton(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onClick = viewModel::closeSettings)
+                Text(strings.settingsTitle, style = GooGooseType.headerBrand, color = GooGooseColors.text)
             }
             HorizontalDivider(color = GooGooseColors.divider, thickness = 1.dp)
-            Column {
-                FieldLabel(strings.dataLabel)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SecondaryButton(
-                        strings.exportLabel,
-                        onClick = { exportLauncher.launch("till-data.json") },
-                        leadingIcon = Icons.Outlined.FileDownload,
-                        modifier = Modifier.weight(1f),
-                    )
-                    SecondaryButton(
-                        strings.importLabel,
-                        onClick = { showImportConfirm = true },
-                        leadingIcon = Icons.Outlined.FileUpload,
-                        modifier = Modifier.weight(1f),
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Column {
+                    FieldLabel(strings.businessNameLabel)
+                    GooGooseTextField(
+                        value = state.settingsName,
+                        onValueChange = viewModel::setSettingsName,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                Text(strings.importWarning, style = GooGooseType.caption, color = GooGooseColors.error)
-                val importMessage = state.importMessage
-                if (importMessage != null) {
-                    Text(importMessage, style = GooGooseType.caption, color = GooGooseColors.textMuted)
+                Column {
+                    FieldLabel(strings.currencyLabel)
+                    DropdownField(
+                        selectedLabel = currencyOptions.first { it.first == state.settingsCurrency }.second,
+                        options = currencyOptions,
+                        onSelect = viewModel::setSettingsCurrency,
+                    )
+                }
+                Column {
+                    FieldLabel(strings.languageLabel)
+                    DropdownField(
+                        selectedLabel = languageOptions.first { it.first == state.language }.second,
+                        options = languageOptions,
+                        onSelect = viewModel::setSettingsLanguage,
+                    )
+                }
+                Column {
+                    FieldLabel(strings.textSizeLabel)
+                    val textSizeOptions = listOf(
+                        TextSizePreset.SMALL to strings.textSizeSmall,
+                        TextSizePreset.STANDARD to strings.textSizeStandard,
+                        TextSizePreset.LARGE to strings.textSizeLarge,
+                    )
+                    DropdownField(
+                        selectedLabel = textSizeOptions.first { it.first == state.textSize }.second,
+                        options = textSizeOptions,
+                        onSelect = viewModel::setTextSize,
+                    )
+                }
+                HorizontalDivider(color = GooGooseColors.divider, thickness = 1.dp)
+                Column {
+                    FieldLabel(strings.dataLabel)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SecondaryButton(
+                            strings.exportLabel,
+                            onClick = { exportLauncher.launch("till-data.json") },
+                            leadingIcon = Icons.Outlined.FileDownload,
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecondaryButton(
+                            strings.importLabel,
+                            onClick = { showImportConfirm = true },
+                            leadingIcon = Icons.Outlined.FileUpload,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    Text(strings.importWarning, style = GooGooseType.caption, color = GooGooseColors.error)
+                    val importMessage = state.importMessage
+                    if (importMessage != null) {
+                        Text(importMessage, style = GooGooseType.caption, color = GooGooseColors.textMuted)
+                    }
+                }
+                HorizontalDivider(color = GooGooseColors.divider, thickness = 1.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAbout = true }
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(strings.aboutLabel, style = GooGooseType.bodySmall, color = GooGooseColors.text)
+                    Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, tint = GooGooseColors.textMuted)
                 }
             }
         }
-    }
 
-    if (showImportConfirm) {
-        Dialog(onDismissRequest = { showImportConfirm = false }) {
-            GooGooseCard(modifier = Modifier.fillMaxWidth()) {
-                Text(strings.importWarningTitle, style = GooGooseType.dialogTitle, color = GooGooseColors.text)
-                Text(strings.importWarning, style = GooGooseType.bodySmall, color = GooGooseColors.text)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                ) {
-                    SecondaryButton(strings.cancel, onClick = { showImportConfirm = false })
-                    PrimaryTextButton(
-                        strings.importLabel,
-                        onClick = {
-                            showImportConfirm = false
-                            importLauncher.launch(arrayOf("application/json"))
-                        },
-                    )
+        if (showAbout) {
+            BackHandler(onBack = { showAbout = false })
+            AboutScreen(strings = strings, onBack = { showAbout = false })
+        }
+
+        if (showImportConfirm) {
+            Dialog(onDismissRequest = { showImportConfirm = false }) {
+                GooGooseCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(strings.importWarningTitle, style = GooGooseType.dialogTitle, color = GooGooseColors.text)
+                    Text(strings.importWarning, style = GooGooseType.bodySmall, color = GooGooseColors.text)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    ) {
+                        SecondaryButton(strings.cancel, onClick = { showImportConfirm = false })
+                        PrimaryTextButton(
+                            strings.importLabel,
+                            onClick = {
+                                showImportConfirm = false
+                                importLauncher.launch(arrayOf("application/json"))
+                            },
+                        )
+                    }
                 }
             }
         }
