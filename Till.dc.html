@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-369a18ae-07a3-482c-ad23-c72860b6622d/styles.css">
+  <script src="_ds/nocturne-369a18ae-07a3-482c-ad23-c72860b6622d/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <style>
+    body{margin:0}
+    a{color:var(--color-accent-300)}
+    a:hover{color:var(--color-accent-200)}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--color-bg);padding:48px 24px;font-family:var(--font-body)">
+  <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="true" hint-size="412px,892px">
+    <div style="position:relative;height:100%;display:flex;flex-direction:column;background:var(--color-bg);overflow:hidden;font-family:var(--font-body);color:var(--color-text)">
+
+      <div style="flex:none;padding:14px 18px 10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--color-divider)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:15px;letter-spacing:0.02em">Till</span>
+          <button type="button" class="btn btn-icon btn-ghost" aria-label="Settings" onClick="{{ openSettings }}">
+            <i class="ph ph-gear" style="font-size:20px"></i>
+          </button>
+        </div>
+        <sc-if value="{{ isTab0 }}"><h3 style="margin:6px 0 1px">{{ L.transactions }}</h3></sc-if>
+        <sc-if value="{{ isTab1 }}"><h3 style="margin:6px 0 1px">{{ L.stockTab }}</h3></sc-if>
+        <sc-if value="{{ isTab2 }}"><h3 style="margin:6px 0 1px">{{ L.reports }}</h3></sc-if>
+        <sc-if value="{{ isTab3 }}"><h3 style="margin:6px 0 1px">{{ L.todoTab }}</h3></sc-if>
+        <span class="text-muted" style="font-size:12px">{{ businessName }}</span>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:14px 18px 90px">
+
+        <sc-if value="{{ isTab0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card elev-sm">
+              <span class="card-kicker">{{ L.accountBalance }}</span>
+              <span style="font-family:var(--font-heading);font-weight:500;font-size:32px;letter-spacing:-0.02em">$8,942.10</span>
+              <div class="card-meta"><span class="tag tag-accent">{{ monthNetLabel }}</span><span>{{ L.thisMonth }}</span></div>
+            </div>
+
+            <div class="seg" style="align-self:flex-start">
+              <label class="seg-opt"><input type="radio" name="filter" checked="{{ filterAll }}" onChange="{{ setFilterAll }}"/>{{ L.all }}</label>
+              <label class="seg-opt"><input type="radio" name="filter" checked="{{ filterIncome }}" onChange="{{ setFilterIncome }}"/>{{ L.income }}</label>
+              <label class="seg-opt"><input type="radio" name="filter" checked="{{ filterSpend }}" onChange="{{ setFilterSpend }}"/>{{ L.spend }}</label>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ groups }}" as="group" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span class="text-muted" style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase">{{ group.date }}</span>
+                  <div style="display:flex;flex-direction:column">
+                    <sc-for list="{{ group.items }}" as="item" hint-placeholder-count="2">
+                      <div onClick="{{ item.open }}" style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--color-divider);cursor:pointer">
+                        <div style="width:34px;height:34px;border-radius:50%;flex:none;background:var(--color-accent-800);color:var(--color-accent-100);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">{{ item.initial }}</div>
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                          <span style="font-size:14px">{{ item.name }}</span>
+                          <span class="text-muted" style="font-size:12px">{{ item.sub }} &middot; {{ item.time }} &middot; {{ item.method }} <span style="color:{{ item.paidColor }}">{{ item.paidMark }}</span></span>
+                        </div>
+                        <span style="font-size:14px;font-weight:500;color:{{ item.amountColor }}">{{ item.amountLabel }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTab1 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <span class="text-muted" style="font-size:12px">{{ lowStockCount }} {{ L.lowSuffix }}</span>
+              <button type="button" class="btn btn-secondary" style="padding:6px 10px;font-size:12px" onClick="{{ openAddStock }}"><i class="ph ph-plus" style="font-size:13px;margin-right:4px"></i>{{ L.addItem }}</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ stockRows }}" as="s" hint-placeholder-count="6">
+                <div class="card elev-sm">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                    <span class="card-title">{{ s.name }}</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <sc-if value="{{ s.low }}"><span class="tag tag-outline">{{ L.lowTag }}</span></sc-if>
+                      <button type="button" class="btn btn-icon btn-ghost" aria-label="{{ L.removeItem }}" onClick="{{ s.remove }}"><i class="ph ph-trash" style="font-size:15px"></i></button>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                    <span style="font-size:17px;font-weight:600">{{ s.qty }}</span>
+                    <div style="display:flex;align-items:center;gap:4px">
+                      <input class="input" type="text" value="{{ s.unit }}" onChange="{{ s.setUnit }}" style="width:52px;padding:6px 4px;text-align:center;font-size:11px" aria-label="Unit"/>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                    <button type="button" class="btn btn-secondary" style="width:36px;height:36px;padding:0;font-size:16px" onClick="{{ s.decrease }}">&minus;</button>
+                    <input class="input" type="number" min="0" step="any" value="{{ s.amount }}" onChange="{{ s.setAmount }}" style="width:64px;padding:6px;text-align:center"/>
+                    <button type="button" class="btn btn-secondary" style="width:36px;height:36px;padding:0;font-size:16px" onClick="{{ s.increase }}">+</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showAddStock }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 55%, transparent);display:flex;align-items:flex-end;z-index:3" onClick="{{ closeAddStock }}">
+            <div style="width:100%;background:var(--color-surface);border-radius:16px 16px 0 0;padding:16px 18px 22px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:14px" onClick="{{ stopClick }}">
+              <div style="width:36px;height:4px;border-radius:2px;background:var(--color-divider);align-self:center"></div>
+              <span class="dialog-title">{{ L.addStockItem }}</span>
+              <div class="field">
+                <label>{{ L.nameLabel }}</label>
+                <input class="input" type="text" value="{{ newStockName }}" onChange="{{ setNewStockName }}" placeholder="{{ L.vanillaPlaceholder }}"/>
+              </div>
+              <div class="field">
+                <label>{{ L.startingQty }}</label>
+                <input class="input" type="number" min="0" step="any" value="{{ newStockQty }}" onChange="{{ setNewStockQty }}" placeholder="0"/>
+              </div>
+              <div class="field">
+                <label>{{ L.unitLabel }}</label>
+                <input class="input" type="text" value="{{ newStockUnit }}" onChange="{{ setNewStockUnit }}" placeholder="{{ L.unitPlaceholder }}"/>
+              </div>
+              <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" onClick="{{ closeAddStock }}">{{ L.cancel }}</button>
+                <button type="button" class="btn btn-primary" onClick="{{ saveNewStock }}">{{ L.add }}</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showStockConfirm }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 55%, transparent);display:flex;align-items:center;justify-content:center;padding:24px;z-index:3" onClick="{{ cancelStockChange }}">
+            <div style="width:100%;background:var(--color-surface);border-radius:14px;padding:18px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:12px" onClick="{{ stopClick }}">
+              <span class="dialog-title">{{ stockConfirmTitle }}</span>
+              <p style="margin:0;font-size:13px;color:var(--color-text)">{{ stockConfirmMessage }}</p>
+              <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" onClick="{{ cancelStockChange }}">{{ L.cancel }}</button>
+                <button type="button" class="btn btn-primary" onClick="{{ confirmStockChange }}">{{ L.confirm }}</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTab2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div class="card elev-sm" style="padding:10px 12px;gap:2px">
+                <span class="card-kicker" style="font-size:9px">{{ L.income }}</span>
+                <span style="font-size:15px;font-weight:500">{{ monthIncomeLabel }}</span>
+              </div>
+              <div class="card elev-sm" style="padding:10px 12px;gap:2px">
+                <span class="card-kicker" style="font-size:9px">{{ L.spend }}</span>
+                <span style="font-size:15px;font-weight:500">{{ monthSpendLabel }}</span>
+              </div>
+              <div class="card elev-sm" style="padding:10px 12px;gap:2px">
+                <span class="card-kicker" style="font-size:9px">{{ L.net }}</span>
+                <span style="font-size:15px;font-weight:500;color:var(--color-accent-300)">{{ monthNetLabel }}</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <h5 style="margin:0">{{ L.spendByCategory }}</h5>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ budgetRows }}" as="s" hint-placeholder-count="6">
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <div style="display:flex;justify-content:space-between;font-size:12px">
+                      <span>{{ s.cat }}</span><span class="text-muted">{{ s.spentLabel }}</span>
+                    </div>
+                    <div style="height:7px;border-radius:100px;background:var(--color-neutral-800);overflow:hidden">
+                      <div style="height:100%;border-radius:100px;background:var(--color-accent);width:{{ s.barPct }}%"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <h5 style="margin:0">{{ L.last7 }}</h5>
+              <div style="display:flex;align-items:flex-end;gap:10px;height:64px;padding:0 4px">
+                <sc-for list="{{ weekBars }}" as="d" hint-placeholder-count="7">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%">
+                    <div style="width:100%;max-width:22px;border-radius:4px;background:{{ d.barColor }};height:{{ d.h }}px"></div>
+                    <span class="text-muted" style="font-size:10px">{{ d.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTab3 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ todoRows }}" as="t" hint-placeholder-count="5">
+              <div class="card elev-sm" style="gap:8px">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                  <span class="card-title" style="{{ t.titleStyle }}">{{ t.title }}</span>
+                </div>
+                <p class="card-body">{{ t.desc }}</p>
+                <button type="button" class="{{ t.doneClass }}" style="align-self:flex-start" onClick="{{ t.toggle }}">{{ t.doneLabel }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex:none;position:relative;display:flex;align-items:center;height:64px;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:0 8px">
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-evenly">
+          <button type="button" onClick="{{ goTab0 }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:{{ nav0Color }};cursor:pointer;font-family:var(--font-body)">
+            <i class="ph ph-receipt" style="font-size:18px"></i><span style="font-size:9px">{{ L.transactions }}</span>
+          </button>
+          <button type="button" onClick="{{ goTab3 }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:{{ nav3Color }};cursor:pointer;font-family:var(--font-body)">
+            <i class="ph ph-list-checks" style="font-size:18px"></i><span style="font-size:9px">{{ L.todoTab }}</span>
+          </button>
+        </div>
+        <div style="width:56px;flex:none"></div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-evenly">
+          <button type="button" onClick="{{ goTab2 }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:{{ nav2Color }};cursor:pointer;font-family:var(--font-body)">
+            <i class="ph ph-chart-bar" style="font-size:18px"></i><span style="font-size:9px">{{ L.reports }}</span>
+          </button>
+          <button type="button" onClick="{{ goTab1 }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:{{ nav1Color }};cursor:pointer;font-family:var(--font-body)">
+            <i class="ph ph-package" style="font-size:18px"></i><span style="font-size:9px">{{ L.stockTab }}</span>
+          </button>
+        </div>
+        <button type="button" onClick="{{ openSheet }}" aria-label="Add transaction" style="position:absolute;top:-24px;left:50%;transform:translateX(-50%);width:52px;height:52px;border-radius:50%;background:var(--color-surface);border:1.5px solid var(--color-accent);color:var(--color-accent);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-md)">
+          <i class="ph ph-plus" style="font-size:22px"></i>
+        </button>
+      </div>
+
+      <sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--color-bg);display:flex;flex-direction:column;z-index:2">
+          <div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid var(--color-divider)">
+            <button type="button" class="btn btn-icon btn-ghost" aria-label="Back" onClick="{{ closeSettings }}">
+              <i class="ph ph-arrow-left" style="font-size:18px"></i>
+            </button>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:15px">{{ L.settingsTitle }}</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+            <div class="field">
+              <label>{{ L.businessNameLabel }}</label>
+              <input class="input" type="text" value="{{ settingsName }}" onChange="{{ setSettingsName }}"/>
+            </div>
+            <div class="field">
+              <label>{{ L.currencyLabel }}</label>
+              <select class="input" value="{{ settingsCurrency }}" onChange="{{ setSettingsCurrency }}">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD ($)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>{{ L.languageLabel }}</label>
+              <select class="input" value="{{ settingsLanguage }}" onChange="{{ setSettingsLanguage }}">
+                <option value="en">English</option>
+                <option value="zh-CN">简体中文</option>
+              </select>
+            </div>
+            <div class="hr" style="margin:2px 0"></div>
+            <div class="field">
+              <label>{{ L.dataLabel }}</label>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn-secondary" style="flex:1" onClick="{{ exportData }}"><i class="ph ph-download-simple" style="font-size:14px;margin-right:6px"></i>{{ L.exportLabel }}</button>
+                <button type="button" class="btn btn-secondary" style="flex:1" onClick="{{ triggerImport }}"><i class="ph ph-upload-simple" style="font-size:14px;margin-right:6px"></i>{{ L.importLabel }}</button>
+              </div>
+              <input ref="{{ importInputRef }}" type="file" accept="application/json" style="display:none" onChange="{{ importData }}"/>
+              <sc-if value="{{ importMessage }}" hint-placeholder-val="{{ false }}">
+                <span class="text-muted" style="font-size:11px">{{ importMessage }}</span>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--color-bg);display:flex;flex-direction:column;z-index:2">
+          <div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid var(--color-divider)">
+            <button type="button" class="btn btn-icon btn-ghost" aria-label="Back" onClick="{{ closeDetail }}">
+              <i class="ph ph-arrow-left" style="font-size:18px"></i>
+            </button>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:15px">{{ L.editTransaction }}</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+            <div class="field">
+              <label>{{ L.amountLabel }}</label>
+              <input class="input" type="text" key="{{ detailItem.name }}-amt" defaultValue="{{ detailItem.amountLabel }}"/>
+            </div>
+            <div class="field">
+              <label>{{ L.descriptionLabel }}</label>
+              <input class="input" type="text" key="{{ detailItem.name }}-name" defaultValue="{{ detailItem.name }}"/>
+            </div>
+            <div class="field">
+              <label>{{ L.categoryLabel }}</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ categoryChips }}" as="chip" hint-placeholder-count="9">
+                  <span onClick="{{ chip.select }}" class="{{ chip.tagClass }}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;letter-spacing:0.02em;padding:5px 6px 5px 10px;border-radius:6px">
+                    {{ chip.name }}
+                    <button type="button" onClick="{{ chip.remove }}" aria-label="{{ L.deleteCategory }}" style="background:none;border:none;color:inherit;opacity:0.6;cursor:pointer;display:flex;padding:2px;font-size:11px">
+                      <i class="ph ph-x"></i>
+                    </button>
+                  </span>
+                </sc-for>
+                <sc-if value="{{ addingCategory }}" hint-placeholder-val="{{ false }}">
+                  <input class="input" style="width:140px" autoFocus="true" value="{{ newCategoryName }}" onChange="{{ setNewCategoryName }}" onBlur="{{ confirmAddCategory }}" onKeyDown="{{ onCategoryKeyDown }}" placeholder="New category"/>
+                </sc-if>
+                <sc-if value="{{ notAddingCategory }}" hint-placeholder-val="{{ true }}">
+                  <button type="button" class="tag tag-outline" onClick="{{ startAddCategory }}" style="cursor:pointer;border-style:dashed;background:none">
+                    <i class="ph ph-plus" style="font-size:11px;margin-right:4px"></i>{{ L.newCat }}
+                  </button>
+                </sc-if>
+              </div>
+            </div>
+            <div class="field">
+              <label>{{ L.paymentMethod }}</label>
+              <input class="input" type="text" key="{{ detailItem.name }}-method" value="{{ detailMethod }}" onChange="{{ setDetailMethod }}" placeholder="e.g. Card, Cash, Bank transfer"/>
+            </div>
+            <div class="field">
+              <label>{{ L.paymentStatus }}</label>
+              <div class="seg" style="align-self:flex-start">
+                <label class="seg-opt"><input type="radio" name="paidstatus" checked="{{ detailPaidYes }}" onChange="{{ setDetailPaidYes }}"/>{{ L.paidLabel }}</label>
+                <label class="seg-opt"><input type="radio" name="paidstatus" checked="{{ detailPaidNo }}" onChange="{{ setDetailPaidNo }}"/>{{ L.unpaidLabel }}</label>
+              </div>
+            </div>
+            <div class="field">
+              <label>{{ L.remarksLabel }}</label>
+              <textarea class="input" rows="3" key="{{ detailItem.name }}-rem" defaultValue="{{ detailItem.remarks }}" placeholder="{{ L.addNote }}"></textarea>
+            </div>
+            <div class="hr" style="margin:0"></div>
+            <div style="display:flex;flex-direction:column;gap:4px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span class="text-muted">{{ L.created }}</span><span>{{ detailItem.createdAt }}</span></div>
+              <div style="display:flex;justify-content:space-between"><span class="text-muted">{{ L.lastModified }}</span><span>{{ detailItem.modifiedAt }}</span></div>
+            </div>
+            <div class="dialog-actions" style="margin-top:auto">
+              <button type="button" class="btn btn-secondary" onClick="{{ closeDetail }}">{{ L.cancel }}</button>
+              <button type="button" class="btn btn-primary" onClick="{{ closeDetail }}">{{ L.save }}</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showSheet }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 55%, transparent);display:flex;align-items:flex-end" onClick="{{ closeSheet }}">
+          <div style="width:100%;background:var(--color-surface);border-radius:16px 16px 0 0;padding:16px 18px 22px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:14px" onClick="{{ stopClick }}">
+            <div style="width:36px;height:4px;border-radius:2px;background:var(--color-divider);align-self:center"></div>
+            <span class="dialog-title">{{ L.addTransaction }}</span>
+
+            <div class="seg" style="align-self:flex-start">
+              <label class="seg-opt"><input type="radio" name="sheettype" checked="{{ sheetIsSpend }}" onChange="{{ setSheetSpend }}"/>{{ L.spend }}</label>
+              <label class="seg-opt"><input type="radio" name="sheettype" checked="{{ sheetIsIncome }}" onChange="{{ setSheetIncome }}"/>{{ L.income }}</label>
+            </div>
+
+            <div class="field">
+              <label>{{ L.amountLabel }}</label>
+              <input class="input" type="text" placeholder="{{ L.amountPlaceholder }}" inputMode="decimal"/>
+            </div>
+            <div class="field">
+              <label>{{ L.descriptionLabel }}</label>
+              <input class="input" type="text" placeholder="{{ L.posPlaceholder }}"/>
+            </div>
+            <div class="field">
+              <label>{{ L.categoryLabel }}</label>
+              <select class="input">
+                <option>Sales</option><option>Catering &amp; Events</option><option>Other Income</option>
+                <option>Inventory &amp; Supplies</option><option>Rent</option><option>Utilities</option>
+                <option>Wages</option><option>Marketing</option><option>Equipment</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>{{ L.dateLabel }}</label>
+              <input class="input" type="date" value="2026-08-30"/>
+            </div>
+
+            <div class="dialog-actions">
+              <button type="button" class="btn btn-secondary" onClick="{{ closeSheet }}">{{ L.cancel }}</button>
+              <button type="button" class="btn btn-primary" onClick="{{ closeSheet }}">{{ L.save }}</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 508, &quot;height&quot;: 988},
+  &quot;businessName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Riverside Coffee &amp; Goods&quot;, &quot;tsType&quot;: &quot;string&quot;},
+  &quot;defaultTab&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Transactions&quot;, &quot;options&quot;: [&quot;Transactions&quot;, &quot;Stock&quot;, &quot;Reports&quot;], &quot;tsType&quot;: &quot;string&quot;},
+  &quot;sheetDefaultType&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Spend&quot;, &quot;options&quot;: [&quot;Income&quot;, &quot;Spend&quot;], &quot;tsType&quot;: &quot;string&quot;}
+}">
+class Component extends DCLogic {
+  importInputRef = React.createRef();
+  i18n = {
+    en: {
+      transactions:'Transactions', stockTab:'Stock', reports:'Reports', todoTab:'Todo',
+      accountBalance:'Account balance', thisMonth:'this month',
+      all:'All', income:'Income', spend:'Spend',
+      lowSuffix:'low', addItem:'Add item', removeItem:'Remove item', lowTag:'Low',
+      addStockItem:'Add stock item', nameLabel:'Name', startingQty:'Starting quantity', unitLabel:'Unit',
+      cancel:'Cancel', add:'Add', vanillaPlaceholder:'e.g. Vanilla syrup', unitPlaceholder:'e.g. bottles, kg, pcs',
+      increaseStock:'Increase stock?', decreaseStock:'Decrease stock?', confirm:'Confirm',
+      net:'Net', spendByCategory:'Spend by category', last7:'Last 7 days \u00b7 net cash flow',
+      markDone:'Mark done', doneLabel:'\u2714 Done',
+      addTransaction:'Add transaction', amountLabel:'Amount', descriptionLabel:'Description', categoryLabel:'Category', dateLabel:'Date', save:'Save',
+      settingsTitle:'Settings', businessNameLabel:'Business name', currencyLabel:'Currency', languageLabel:'Language', dataLabel:'Data', exportLabel:'Export', importLabel:'Import',
+      editTransaction:'Edit transaction', newCat:'New', paymentMethod:'Payment method', paymentStatus:'Payment status', paidLabel:'\u2714 Paid', unpaidLabel:'\u2716 Unpaid',
+      remarksLabel:'Remarks', addNote:'Add a note\u2026', created:'Created', lastModified:'Last modified', deleteCategory:'Delete category',
+      posPlaceholder:'e.g. POS batch settlement', amountPlaceholder:'$0.00',
+      increaseVerb:'Increase', decreaseVerb:'Decrease',
+      stockMsg:(v,name,delta,unit,newQty) => `${v} ${name} by ${delta} ${unit}? New total: ${newQty} ${unit}.`,
+      importedMsg:(f) => `Imported ${f}`, importError:'Could not read that file.',
+    },
+    'zh-CN': {
+      transactions:'交易', stockTab:'库存', reports:'报表', todoTab:'待办',
+      accountBalance:'账户余额', thisMonth:'本月',
+      all:'全部', income:'收入', spend:'支出',
+      lowSuffix:'库存不足', addItem:'添加项目', removeItem:'删除项目', lowTag:'不足',
+      addStockItem:'添加库存项目', nameLabel:'名称', startingQty:'初始数量', unitLabel:'单位',
+      cancel:'取消', add:'添加', vanillaPlaceholder:'例如 香草糖浆', unitPlaceholder:'例如 瓶、kg、件',
+      increaseStock:'增加库存？', decreaseStock:'减少库存？', confirm:'确认',
+      net:'净额', spendByCategory:'分类支出', last7:'过去7天 \u00b7 净现金流',
+      markDone:'标记完成', doneLabel:'\u2714 已完成',
+      addTransaction:'添加交易', amountLabel:'金额', descriptionLabel:'描述', categoryLabel:'分类', dateLabel:'日期', save:'保存',
+      settingsTitle:'设置', businessNameLabel:'商家名称', currencyLabel:'货币', languageLabel:'语言', dataLabel:'数据', exportLabel:'导出', importLabel:'导入',
+      editTransaction:'编辑交易', newCat:'新建', paymentMethod:'付款方式', paymentStatus:'付款状态', paidLabel:'\u2714 已付款', unpaidLabel:'\u2716 未付款',
+      remarksLabel:'备注', addNote:'添加备注\u2026', created:'创建时间', lastModified:'最后修改', deleteCategory:'删除分类',
+      posPlaceholder:'例如 POS批次结算', amountPlaceholder:'\uffe50.00',
+      increaseVerb:'增加', decreaseVerb:'减少',
+      stockMsg:(v,name,delta,unit,newQty) => `将 ${name} ${v} ${delta} ${unit}？新总量：${newQty} ${unit}。`,
+      importedMsg:(f) => `已导入 ${f}`, importError:'无法读取该文件。',
+    },
+  };
+  txns = [
+    {date:'Today', items:[
+      {name:'POS batch settlement', sub:'Sales', amount:412.50, type:'income', time:'5:42 PM', createdAt:'Aug 30, 2026 \u00b7 5:42 PM', modifiedAt:'Aug 30, 2026 \u00b7 5:42 PM', remarks:'', method:'Card', paid:true},
+      {name:'Sunrise Roasters \u2014 beans', sub:'Inventory & Supplies', amount:186.40, type:'spend', time:'9:15 AM', createdAt:'Aug 30, 2026 \u00b7 9:15 AM', modifiedAt:'Aug 30, 2026 \u00b7 9:15 AM', remarks:'Weekly bean restock, 20lb house blend.', method:'Bank transfer', paid:true},
+    ]},
+    {date:'Yesterday', items:[
+      {name:'POS batch settlement', sub:'Sales', amount:389.20, type:'income', time:'6:03 PM', createdAt:'Aug 29, 2026 \u00b7 6:03 PM', modifiedAt:'Aug 29, 2026 \u00b7 6:03 PM', remarks:'', method:'Card', paid:true},
+      {name:'Instagram ads', sub:'Marketing', amount:45.00, type:'spend', time:'11:20 AM', createdAt:'Aug 29, 2026 \u00b7 11:20 AM', modifiedAt:'Aug 29, 2026 \u00b7 4:52 PM', remarks:'Boosted post, weekend promo.', method:'Credit card', paid:false},
+    ]},
+    {date:'Thu, Aug 27', items:[
+      {name:'Catering order \u2014 Hyde & Co.', sub:'Catering & Events', amount:540.00, type:'income', time:'2:10 PM', createdAt:'Aug 27, 2026 \u00b7 2:10 PM', modifiedAt:'Aug 27, 2026 \u00b7 2:10 PM', remarks:'Office lunch order, 20 people.', method:'Invoice', paid:false},
+      {name:'Electric bill', sub:'Utilities', amount:142.30, type:'spend', time:'8:47 AM', createdAt:'Aug 27, 2026 \u00b7 8:47 AM', modifiedAt:'Aug 27, 2026 \u00b7 8:47 AM', remarks:'', method:'Bank transfer', paid:true},
+    ]},
+    {date:'Wed, Aug 26', items:[
+      {name:'POS batch settlement', sub:'Sales', amount:465.75, type:'income', time:'5:58 PM', createdAt:'Aug 26, 2026 \u00b7 5:58 PM', modifiedAt:'Aug 26, 2026 \u00b7 5:58 PM', remarks:'', method:'Card', paid:true},
+      {name:'Payroll \u2014 part-time staff', sub:'Wages', amount:1180.00, type:'spend', time:'4:00 PM', createdAt:'Aug 26, 2026 \u00b7 4:00 PM', modifiedAt:'Aug 26, 2026 \u00b7 4:00 PM', remarks:'Biweekly payroll, 3 staff.', method:'Bank transfer', paid:true},
+    ]},
+    {date:'Mon, Aug 24', items:[
+      {name:'POS batch settlement', sub:'Sales', amount:398.10, type:'income', time:'6:12 PM', createdAt:'Aug 24, 2026 \u00b7 6:12 PM', modifiedAt:'Aug 24, 2026 \u00b7 6:12 PM', remarks:'', method:'Card', paid:true},
+      {name:'Pastry supplier invoice', sub:'Inventory & Supplies', amount:210.65, type:'spend', time:'10:05 AM', createdAt:'Aug 24, 2026 \u00b7 10:05 AM', modifiedAt:'Aug 24, 2026 \u00b7 10:05 AM', remarks:'Monthly pastry invoice.', method:'Invoice', paid:false},
+      {name:'Espresso machine service', sub:'Equipment', amount:60.00, type:'spend', time:'1:30 PM', createdAt:'Aug 24, 2026 \u00b7 1:30 PM', modifiedAt:'Aug 24, 2026 \u00b7 1:30 PM', remarks:'', method:'Cash', paid:true},
+    ]},
+  ];
+
+  stock = [
+    {name:'Espresso beans', qty:14, unit:'kg', low:5},
+    {name:'Oat milk', qty:22, unit:'L', low:10},
+    {name:'Whole milk', qty:18, unit:'L', low:10},
+    {name:'Paper cups (12oz)', qty:340, unit:'pcs', low:150},
+    {name:'Croissants', qty:6, unit:'pcs', low:8},
+    {name:'Sugar packets', qty:900, unit:'pcs', low:200},
+  ];
+
+  budgets = [
+    {cat:'Wages', spent:2950, budget:3200},
+    {cat:'Inventory & Supplies', spent:1860, budget:2400},
+    {cat:'Rent', spent:1800, budget:1800},
+    {cat:'Utilities', spent:268, budget:350},
+    {cat:'Marketing', spent:145, budget:200},
+    {cat:'Equipment', spent:60, budget:500},
+  ];
+
+  week = [
+    {label:'M', net:120},{label:'T', net:-40},{label:'W', net:210},{label:'T', net:-90},
+    {label:'F', net:300},{label:'S', net:380},{label:'S', net:150},
+  ];
+
+  todos = [
+    {title:'Reconcile August bank statement', desc:'Match POS deposits against the bank feed before closing the month.', done:false},
+    {title:'Renew food handler\u2019s permit', desc:'City permit expires Sept 15 \u2014 submit renewal paperwork.', done:false},
+    {title:'Follow up on Hyde & Co. invoice', desc:'Catering invoice from Aug 27 is still unpaid, $540.00.', done:false},
+    {title:'Order espresso machine parts', desc:'Replacement gasket and group head seal from supplier.', done:true},
+    {title:'Schedule deep clean for espresso bar', desc:'Book the quarterly descale and backflush service.', done:false},
+    {title:'Review Instagram ad spend', desc:'Check performance on the weekend promo before renewing.', done:true},
+  ];
+
+  state = {
+    tab: this.props.defaultTab === 'Stock' ? 1 : this.props.defaultTab === 'Reports' ? 2 : 0,
+    showSheet: false,
+    filter: 'all',
+    stock: null,
+    stockAmounts: {},
+    showAddStock: false,
+    newStockName: '',
+    newStockQty: '',
+    newStockUnit: '',
+    stockConfirm: null,
+    showSettings: false,
+    settingsName: null,
+    settingsCurrency: 'USD',
+    settingsLanguage: 'en',
+    importMessage: null,
+    sheetType: this.props.sheetDefaultType === 'Income' ? 'income' : 'spend',
+    detailItem: null,
+    detailCategory: null,
+    todos: null,
+    categories: ['Sales', 'Catering & Events', 'Other Income', 'Inventory & Supplies', 'Rent', 'Utilities', 'Wages', 'Marketing', 'Equipment'],
+    addingCategory: false,
+    newCategoryName: '',
+  };
+
+  renderVals() {
+    const filter = this.state.filter;
+    const groups = this.txns
+      .map(g => ({ date: g.date, items: g.items.filter(it => filter === 'all' || it.type === filter) }))
+      .filter(g => g.items.length)
+      .map(g => ({
+        date: g.date,
+        items: g.items.map(it => {
+          const built = {
+            ...it,
+            amountLabel: (it.type === 'income' ? '+$' : '-$') + it.amount.toFixed(2),
+            amountColor: it.type === 'income' ? 'var(--color-accent-300)' : 'var(--color-text)',
+            initial: it.sub.charAt(0),
+            paidMark: it.paid ? '\u2714' : '\u2716',
+            paidColor: it.paid ? 'var(--color-accent-300)' : 'var(--color-neutral-500)',
+          };
+          built.open = () => this.setState({ detailItem: built, detailCategory: built.sub, detailMethod: built.method, detailPaid: built.paid });
+          return built;
+        }),
+      }));
+
+    const stockList = this.state.stock || this.stock;
+    const stockAmounts = this.state.stockAmounts || {};
+    const stockRows = stockList.map((s, i) => {
+      const amount = stockAmounts[i] ?? '1';
+      return {
+        name: s.name,
+        qty: s.qty,
+        unit: s.unit,
+        low: s.qty <= s.low,
+        amount,
+        setAmount: (e) => this.setState({ stockAmounts: { ...stockAmounts, [i]: e.target.value } }),
+        setUnit: (e) => {
+          const list = stockList.slice();
+          list[i] = { ...list[i], unit: e.target.value };
+          this.setState({ stock: list });
+        },
+        increase: () => {
+          const delta = Math.max(0, parseFloat(amount) || 1);
+          this.setState({ stockConfirm: { index: i, delta, verb: 'Increase', name: s.name, unit: s.unit, newQty: s.qty + delta } });
+        },
+        decrease: () => {
+          const delta = Math.max(0, parseFloat(amount) || 1);
+          this.setState({ stockConfirm: { index: i, delta: -delta, verb: 'Decrease', name: s.name, unit: s.unit, newQty: Math.max(0, s.qty - delta) } });
+        },
+        remove: () => {
+          const list = stockList.slice();
+          list.splice(i, 1);
+          this.setState({ stock: list });
+        },
+      };
+    });
+    const lowStockCount = stockRows.filter(s => s.low).length;
+
+    const stockConfirm = this.state.stockConfirm;
+
+    const maxSpend = Math.max(...this.budgets.map(b => b.spent));
+    const budgetRows = this.budgets
+      .slice()
+      .sort((a, b) => b.spent - a.spent)
+      .map(b => ({
+        ...b,
+        pct: Math.min(100, Math.round((b.spent / b.budget) * 100)),
+        barPct: Math.min(100, Math.round((b.spent / maxSpend) * 100)),
+        over: b.spent > b.budget,
+        spentLabel: '$' + b.spent.toFixed(2),
+        budgetLabel: '$' + b.budget.toFixed(2),
+      }));
+
+    const totalBudget = this.budgets.reduce((s, b) => s + b.budget, 0);
+    const totalSpent = this.budgets.reduce((s, b) => s + b.spent, 0);
+
+    const maxWeek = Math.max(...this.week.map(d => Math.abs(d.net)));
+    const weekBars = this.week.map(d => ({
+      label: d.label,
+      h: Math.max(4, Math.round((Math.abs(d.net) / maxWeek) * 44)),
+      barColor: d.net >= 0 ? 'var(--color-accent)' : 'var(--color-neutral-500)',
+    }));
+
+    const accent = 'var(--color-accent)';
+    const muted = 'var(--color-neutral-400)';
+    const L = this.i18n[this.state.settingsLanguage] || this.i18n.en;
+
+    return {
+      L,
+      businessName: this.props.businessName ?? 'Riverside Coffee & Goods',
+      isTab0: this.state.tab === 0,
+      isTab1: this.state.tab === 1,
+      isTab2: this.state.tab === 2,
+      isTab3: this.state.tab === 3,
+      goTab0: () => this.setState({ tab: 0 }),
+      goTab1: () => this.setState({ tab: 1 }),
+      goTab2: () => this.setState({ tab: 2 }),
+      goTab3: () => this.setState({ tab: 3 }),
+      nav0Color: this.state.tab === 0 ? accent : muted,
+      nav1Color: this.state.tab === 1 ? accent : muted,
+      nav2Color: this.state.tab === 2 ? accent : muted,
+      nav3Color: this.state.tab === 3 ? accent : muted,
+      todoRows: (this.state.todos || this.todos).map((t, i) => ({
+        title: t.title,
+        desc: t.desc,
+        done: t.done,
+        origIndex: i,
+        toggle: () => {
+          const list = (this.state.todos || this.todos).slice();
+          list[i] = { ...list[i], done: !list[i].done };
+          this.setState({ todos: list });
+        },
+        doneLabel: t.done ? L.doneLabel : L.markDone,
+        doneClass: t.done ? 'btn btn-primary' : 'btn btn-secondary',
+        titleStyle: t.done ? 'text-decoration:line-through;opacity:0.55' : '',
+      })).sort((a, b) => (a.done === b.done ? a.origIndex - b.origIndex : a.done ? 1 : -1)),
+      showSheet: this.state.showSheet,
+      openSheet: () => this.setState({ showSheet: true }),
+      closeSheet: () => this.setState({ showSheet: false }),
+      detailItem: this.state.detailItem,
+      showDetail: !!this.state.detailItem,
+      closeDetail: () => this.setState({ detailItem: null, addingCategory: false, newCategoryName: '' }),
+      notAddingCategory: !this.state.addingCategory,
+      onCategoryKeyDown: e => { if (e.key === 'Enter') e.target.blur(); },
+      categoryChips: this.state.categories.map(c => ({
+        name: c,
+        selected: c === this.state.detailCategory,
+        tagClass: c === this.state.detailCategory ? 'tag tag-accent' : 'tag tag-neutral',
+        select: () => this.setState({ detailCategory: c }),
+        remove: e => {
+          e.stopPropagation();
+          this.setState(s => ({
+            categories: s.categories.filter(x => x !== c),
+            detailCategory: s.detailCategory === c ? null : s.detailCategory,
+          }));
+        },
+      })),
+      detailMethod: this.state.detailMethod,
+      setDetailMethod: e => this.setState({ detailMethod: e.target.value }),
+      detailPaidYes: this.state.detailPaid === true,
+      detailPaidNo: this.state.detailPaid === false,
+      setDetailPaidYes: () => this.setState({ detailPaid: true }),
+      setDetailPaidNo: () => this.setState({ detailPaid: false }),
+      addingCategory: this.state.addingCategory,
+      startAddCategory: () => this.setState({ addingCategory: true }),
+      newCategoryName: this.state.newCategoryName,
+      setNewCategoryName: e => this.setState({ newCategoryName: e.target.value }),
+      confirmAddCategory: () => {
+        const name = this.state.newCategoryName.trim();
+        if (!name) { this.setState({ addingCategory: false }); return; }
+        this.setState(s => ({
+          categories: s.categories.includes(name) ? s.categories : [...s.categories, name],
+          detailCategory: name,
+          addingCategory: false,
+          newCategoryName: '',
+        }));
+      },
+      stopClick: e => e.stopPropagation(),
+      filterAll: filter === 'all',
+      filterIncome: filter === 'income',
+      filterSpend: filter === 'spend',
+      setFilterAll: () => this.setState({ filter: 'all' }),
+      setFilterIncome: () => this.setState({ filter: 'income' }),
+      setFilterSpend: () => this.setState({ filter: 'spend' }),
+      groups,
+      budgetRows,
+      stockRows,
+      lowStockCount,
+      openSettings: () => this.setState({ showSettings: true }),
+      closeSettings: () => this.setState({ showSettings: false }),
+      showSettings: this.state.showSettings,
+      settingsName: this.state.settingsName ?? (this.props.businessName ?? 'Riverside Coffee & Goods'),
+      setSettingsName: (e) => this.setState({ settingsName: e.target.value }),
+      settingsCurrency: this.state.settingsCurrency,
+      setSettingsCurrency: (e) => this.setState({ settingsCurrency: e.target.value }),
+      settingsLanguage: this.state.settingsLanguage,
+      setSettingsLanguage: (e) => this.setState({ settingsLanguage: e.target.value }),
+      importInputRef: this.importInputRef,
+      importMessage: this.state.importMessage,
+      exportData: () => {
+        const payload = { businessName: this.state.settingsName, currency: this.state.settingsCurrency, txns: this.txns, stock: this.state.stock || this.stock, todos: this.state.todos || this.todos, budgets: this.budgets };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'till-data.json'; a.click();
+        URL.revokeObjectURL(url);
+      },
+      triggerImport: () => this.importInputRef.current && this.importInputRef.current.click(),
+      importData: (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            this.setState({
+              stock: data.stock || (this.state.stock || this.stock),
+              todos: data.todos || (this.state.todos || this.todos),
+              settingsName: data.businessName ?? this.state.settingsName,
+              settingsCurrency: data.currency ?? this.state.settingsCurrency,
+              importMessage: L.importedMsg(file.name),
+            });
+          } catch (err) {
+            this.setState({ importMessage: L.importError });
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      },
+      openAddStock: () => this.setState({ showAddStock: true, newStockName: '', newStockQty: '', newStockUnit: '' }),
+      closeAddStock: () => this.setState({ showAddStock: false }),
+      showAddStock: this.state.showAddStock,
+      newStockName: this.state.newStockName,
+      setNewStockName: (e) => this.setState({ newStockName: e.target.value }),
+      newStockQty: this.state.newStockQty,
+      setNewStockQty: (e) => this.setState({ newStockQty: e.target.value }),
+      newStockUnit: this.state.newStockUnit,
+      setNewStockUnit: (e) => this.setState({ newStockUnit: e.target.value }),
+      saveNewStock: () => {
+        if (!this.state.newStockName) return;
+        const list = stockList.slice();
+        const qty = parseFloat(this.state.newStockQty) || 0;
+        list.push({ name: this.state.newStockName, qty, unit: this.state.newStockUnit || 'pcs', low: Math.ceil(qty * 0.2) });
+        this.setState({ stock: list, showAddStock: false });
+      },
+      showStockConfirm: !!stockConfirm,
+      stockConfirmTitle: stockConfirm ? (stockConfirm.verb === 'Increase' ? L.increaseStock : L.decreaseStock) : '',
+      stockConfirmMessage: stockConfirm ? L.stockMsg(stockConfirm.verb === 'Increase' ? L.increaseVerb : L.decreaseVerb, stockConfirm.name, Math.abs(stockConfirm.delta), stockConfirm.unit, stockConfirm.newQty) : '',
+      cancelStockChange: () => this.setState({ stockConfirm: null }),
+      confirmStockChange: () => {
+        if (!stockConfirm) return;
+        const list = stockList.slice();
+        list[stockConfirm.index] = { ...list[stockConfirm.index], qty: stockConfirm.newQty };
+        this.setState({ stock: list, stockConfirm: null });
+      },
+      totalBudgetLabel: '$' + totalBudget.toFixed(2),
+      totalSpentLabel: '$' + totalSpent.toFixed(2),
+      monthIncomeLabel: '$7,780.00',
+      monthSpendLabel: '$7,083.00',
+      monthNetLabel: '+$697.00',
+      weekBars,
+      sheetIsIncome: this.state.sheetType === 'income',
+      sheetIsSpend: this.state.sheetType === 'spend',
+      setSheetIncome: () => this.setState({ sheetType: 'income' }),
+      setSheetSpend: () => this.setState({ sheetType: 'spend' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
