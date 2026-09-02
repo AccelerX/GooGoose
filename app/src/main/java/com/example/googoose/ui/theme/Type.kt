@@ -28,6 +28,10 @@ private val HeadingWeight = FontWeight.Medium // --font-heading-weight: 500
  * the Large tier. Chart data-labels (e.g. the Reports 7-day bars) hardcode
  * their own `.copy(fontSize = ...)` on top of [caption]/[bodySmall] and so
  * are intentionally unaffected by any of this — see ReportsTab.
+ *
+ * Shifted up one notch from the original scale (old Standard/Large are now
+ * Small/Standard) with a new Large extrapolated one more step in the same
+ * per-role progression — the whole app read too small at the original sizes.
  */
 data class GooGooseTypography(
     val h3: TextStyle,
@@ -45,28 +49,13 @@ data class GooGooseTypography(
     val tag: TextStyle,
 )
 
+/** = old Standard tier. */
 private val GooGooseTypographySmall = GooGooseTypography(
-    h3 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 22.sp, lineHeight = 25.sp),
-    h5 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 15.sp, lineHeight = 18.sp),
-    dialogTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 18.sp, lineHeight = 21.sp),
-    balance = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Medium, fontSize = 28.sp, letterSpacing = (-0.02).em),
-    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, letterSpacing = 0.01.em),
-    cardTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 15.sp, lineHeight = 18.sp),
-    cardKicker = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 9.sp, letterSpacing = 0.1.em, textAlign = TextAlign.Start),
-    body = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 21.sp),
-    bodySmall = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 19.sp),
-    label = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp),
-    caption = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 10.sp),
-    tabLabel = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 8.sp),
-    tag = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 10.sp, letterSpacing = 0.02.em),
-)
-
-private val GooGooseTypographyStandard = GooGooseTypography(
     h3 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 25.sp, lineHeight = 28.sp),
     h5 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 16.sp, lineHeight = 19.sp),
     dialogTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 20.sp, lineHeight = 23.sp),
     balance = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Medium, fontSize = 32.sp, letterSpacing = (-0.02).em),
-    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, letterSpacing = 0.01.em),
+    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Bold, fontSize = 20.sp, letterSpacing = 0.01.em),
     cardTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 17.sp, lineHeight = 20.sp),
     cardKicker = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 10.sp, letterSpacing = 0.1.em, textAlign = TextAlign.Start),
     body = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 23.sp),
@@ -77,12 +66,13 @@ private val GooGooseTypographyStandard = GooGooseTypography(
     tag = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp, letterSpacing = 0.02.em),
 )
 
-private val GooGooseTypographyLarge = GooGooseTypography(
+/** = old Large tier. */
+private val GooGooseTypographyStandard = GooGooseTypography(
     h3 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 28.sp, lineHeight = 32.sp),
     h5 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 18.sp, lineHeight = 21.sp),
     dialogTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 22.sp, lineHeight = 26.sp),
     balance = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Medium, fontSize = 36.sp, letterSpacing = (-0.02).em),
-    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, letterSpacing = 0.01.em),
+    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 0.01.em),
     cardTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 19.sp, lineHeight = 23.sp),
     cardKicker = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp, letterSpacing = 0.1.em, textAlign = TextAlign.Start),
     body = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 17.sp, lineHeight = 25.sp),
@@ -91,6 +81,23 @@ private val GooGooseTypographyLarge = GooGooseTypography(
     caption = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp),
     tabLabel = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 10.sp),
     tag = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp, letterSpacing = 0.02.em),
+)
+
+/** New — one more step past old Large, using each role's own (Large − Standard) delta from the old scale. */
+private val GooGooseTypographyLarge = GooGooseTypography(
+    h3 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 31.sp, lineHeight = 36.sp),
+    h5 = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 20.sp, lineHeight = 23.sp),
+    dialogTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 24.sp, lineHeight = 29.sp),
+    balance = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Medium, fontSize = 40.sp, letterSpacing = (-0.02).em),
+    headerBrand = TextStyle(fontFamily = HeadingFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp, letterSpacing = 0.01.em),
+    cardTitle = TextStyle(fontFamily = HeadingFamily, fontWeight = HeadingWeight, fontSize = 21.sp, lineHeight = 26.sp),
+    cardKicker = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp, letterSpacing = 0.1.em, textAlign = TextAlign.Start),
+    body = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 19.sp, lineHeight = 27.sp),
+    bodySmall = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 18.sp, lineHeight = 26.sp),
+    label = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp),
+    caption = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 13.sp),
+    tabLabel = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp),
+    tag = TextStyle(fontFamily = BodyFamily, fontWeight = FontWeight.Normal, fontSize = 13.sp, letterSpacing = 0.02.em),
 )
 
 fun typographyFor(preset: TextSizePreset): GooGooseTypography = when (preset) {

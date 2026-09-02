@@ -1,5 +1,6 @@
 package com.example.googoose.viewmodel
 
+import com.example.googoose.data.GooGooseRepository
 import com.example.googoose.data.Language
 import com.example.googoose.data.SeedData
 import com.example.googoose.data.TextSizePreset
@@ -47,13 +48,18 @@ data class GooGooseUiState(
     val newStockUnit: String = "",
     /** Blank = auto-default to 20% of [newStockQty] (see GooGooseLogic.lowStockThreshold). */
     val newStockLow: String = "",
+    /** The item whose detail/edit sub-page is open (name/quantity/unit/threshold edits + delete live there now). */
+    val stockDetailItem: StockItem? = null,
 
     val todos: List<TodoItem> = emptyList(),
+    /** The task whose detail/edit sub-page is open (title/description edits + delete live there now). */
+    val todoDetailItem: TodoItem? = null,
     val showAddTodo: Boolean = false,
     val newTodoTitle: String = "",
     val newTodoDesc: String = "",
 
     val categories: List<String> = emptyList(),
+    val paymentMethods: List<String> = emptyList(),
     val addingCategory: Boolean = false,
     val newCategoryName: String = "",
 
@@ -62,6 +68,7 @@ data class GooGooseUiState(
     val settingsCurrency: String = "USD",
     val language: Language = Language.EN,
     val textSize: TextSizePreset = TextSizePreset.STANDARD,
+    val hasOnboarded: Boolean = false,
     val importMessage: String? = null,
 
     val showSheet: Boolean = false,

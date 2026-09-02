@@ -62,6 +62,11 @@ fun ReportsTab(state: GooGooseUiState, strings: Strings, viewModel: GooGooseView
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 90.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
+        if (state.transactions.isEmpty()) {
+            item {
+                Text(strings.emptyReports, style = GooGooseType.bodySmall, color = GooGooseColors.textMuted)
+            }
+        }
         item {
             SegmentedControl(
                 options = listOf(

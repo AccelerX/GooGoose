@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowDropDown
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -48,12 +50,14 @@ import com.example.googoose.viewmodel.GooGooseUiState
 import com.example.googoose.viewmodel.GooGooseViewModel
 
 /**
- * Every field is real now (Phase 2) — Save actually inserts a new
- * transaction. The category list comes from the live [GooGooseUiState.categories]
- * rather than a fixed sample list, so newly-added/removed categories (via the
- * Edit-transaction chip UI) show up here too. New transactions have no
- * method/paid-status field in this sheet, same as the mockup — the
- * repository defaults those (method "", paid true). Cancel still just closes.
+ * Every field is real now — Save actually inserts a new transaction. The
+ * category list comes from the live [GooGooseUiState.categories] rather than
+ * a fixed sample list. Payment method is optional, defaults to whatever the
+ * most-recently-created transaction used, and offers an autocomplete history
+ * (tap into the field) backed by [GooGooseUiState.paymentMethods] — each
+ * history entry can be removed via its own ✕ without touching past
+ * transactions that used it. Payment status defaults to Paid. Cancel closes
+ * without saving.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +66,9 @@ fun AddTransactionSheet(state: GooGooseUiState, strings: Strings, viewModel: Goo
     var description by remember { mutableStateOf("") }
     var category by remember(state.categories) { mutableStateOf(state.categories.firstOrNull().orEmpty()) }
     var categoryMenuOpen by remember { mutableStateOf(false) }
+    var method by remember { mutableStateOf(state.transactions.maxByOrNull { it.createdAt }?.method.orEmpty()) }
+    var showMethodHistory by remember { mutableStateOf(false) }
+    var paid by remember { mutableStateOf(true) }
     var occurredAt by remember { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showValidation by remember { mutableStateOf(false) }
@@ -148,6 +155,47 @@ fun AddTransactionSheet(state: GooGooseUiState, strings: Strings, viewModel: Goo
                 }
             }
             Column {
+                FieldLabel(strings.paymentMethod)
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    GooGooseTextField(
+                        value = method,
+                        onValueChange = { method = it },
+                        placeholder = strings.paymentMethodPlaceholder,
+                        modifier = Modifier.fillMaxWidth(),
+                        onFocusChanged = { focused -> showMethodHistory = focused },
+                    )
+                    DropdownMenu(
+                        expanded = showMethodHistory && state.paymentMethods.isNotEmpty(),
+                        onDismissRequest = { showMethodHistory = false },
+                    ) {
+                        state.paymentMethods.forEach { historyValue ->
+                            DropdownMenuItem(
+                                text = { Text(historyValue) },
+                                onClick = { method = historyValue; showMethodHistory = false },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Outlined.Close,
+                                        contentDescription = strings.removePaymentMethodHistory,
+                                        tint = GooGooseColors.textMuted,
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clickable { viewModel.removePaymentMethodHistory(historyValue) },
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            Column {
+                FieldLabel(strings.paymentStatus)
+                SegmentedControl(
+                    options = listOf(true to strings.paidLabel, false to strings.unpaidLabel),
+                    selected = paid,
+                    onSelect = { paid = it },
+                )
+            }
+            Column {
                 FieldLabel(strings.dateLabel)
                 Box(
                     modifier = Modifier
@@ -171,7 +219,7 @@ fun AddTransactionSheet(state: GooGooseUiState, strings: Strings, viewModel: Goo
                     strings.save,
                     onClick = {
                         if (amountValid && descriptionValid && category.isNotBlank()) {
-                            viewModel.addTransaction(description.trim(), category, amountValue!!, occurredAt)
+                            viewModel.addTransaction(description.trim(), category, amountValue, occurredAt, method.trim(), paid)
                         } else {
                             showValidation = true
                         }

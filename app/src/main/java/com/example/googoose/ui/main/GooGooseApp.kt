@@ -14,13 +14,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.example.googoose.data.stringsFor
+import com.example.googoose.ui.onboarding.OnboardingScreen
 import com.example.googoose.ui.reports.ReportsTab
 import com.example.googoose.ui.settings.SettingsScreen
 import com.example.googoose.ui.stock.AddStockItemSheet
 import com.example.googoose.ui.stock.StockConfirmDialog
+import com.example.googoose.ui.stock.StockDetailScreen
 import com.example.googoose.ui.stock.StockTab
 import com.example.googoose.ui.theme.GooGooseColors
 import com.example.googoose.ui.todo.AddTodoSheet
+import com.example.googoose.ui.todo.TodoDetailScreen
 import com.example.googoose.ui.todo.TodoTab
 import com.example.googoose.ui.transactions.AddTransactionSheet
 import com.example.googoose.ui.transactions.EditTransactionScreen
@@ -37,13 +40,6 @@ fun GooGooseApp(viewModel: GooGooseViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
     val strings = stringsFor(state.language)
 
-    val tabTitle = when (state.tab) {
-        1 -> strings.stockTab
-        2 -> strings.reports
-        3 -> strings.todoTab
-        else -> strings.transactions
-    }
-
     // enableEdgeToEdge() (in MainActivity) draws behind the system bars, so the
     // background fills edge-to-edge but content is inset from status/nav bars.
     Box(
@@ -52,6 +48,18 @@ fun GooGooseApp(viewModel: GooGooseViewModel, modifier: Modifier = Modifier) {
             .background(GooGooseColors.background)
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
+        if (!state.hasOnboarded) {
+            OnboardingScreen(viewModel = viewModel)
+            return@Box
+        }
+
+        val tabTitle = when (state.tab) {
+            1 -> strings.stockTab
+            2 -> strings.reports
+            3 -> strings.todoTab
+            else -> strings.transactions
+        }
+
         Column(modifier = Modifier.fillMaxSize()) {
             AppHeader(
                 appName = strings.appName,
@@ -85,6 +93,18 @@ fun GooGooseApp(viewModel: GooGooseViewModel, modifier: Modifier = Modifier) {
         if (detailItem != null) {
             BackHandler(onBack = viewModel::closeDetail)
             EditTransactionScreen(item = detailItem, state = state, strings = strings, viewModel = viewModel)
+        }
+
+        val stockDetailItem = state.stockDetailItem
+        if (stockDetailItem != null) {
+            BackHandler(onBack = viewModel::closeStockDetail)
+            StockDetailScreen(item = stockDetailItem, strings = strings, viewModel = viewModel)
+        }
+
+        val todoDetailItem = state.todoDetailItem
+        if (todoDetailItem != null) {
+            BackHandler(onBack = viewModel::closeTodoDetail)
+            TodoDetailScreen(item = todoDetailItem, strings = strings, viewModel = viewModel)
         }
 
         if (state.showSheet) {

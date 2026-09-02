@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -158,15 +160,22 @@ fun SecondaryButton(
 
 /** `.btn.btn-primary` */
 @Composable
-fun PrimaryTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PrimaryTextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentAlignment: Alignment = Alignment.TopStart,
+    textStyle: TextStyle? = null,
+) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .border(1.dp, GooGooseColors.accent, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = contentAlignment,
     ) {
-        Text(text, style = GooGooseType.bodySmall, color = GooGooseColors.accent)
+        Text(text, style = textStyle ?: GooGooseType.bodySmall, color = GooGooseColors.accent)
     }
 }
 
@@ -201,6 +210,7 @@ fun GooGooseTextField(
     minLines: Int = 1,
     keyboardType: KeyboardType = KeyboardType.Text,
     textAlign: TextAlign = TextAlign.Start,
+    onFocusChanged: (Boolean) -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -215,7 +225,7 @@ fun GooGooseTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().onFocusChanged { onFocusChanged(it.isFocused) },
             singleLine = singleLine,
             minLines = minLines,
             textStyle = GooGooseType.bodySmall.copy(color = GooGooseColors.text, textAlign = textAlign),

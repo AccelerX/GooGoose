@@ -3,6 +3,7 @@ package com.example.googoose.data
 import androidx.room.withTransaction
 import com.example.googoose.data.db.CategoryEntity
 import com.example.googoose.data.db.GooGooseDatabase
+import com.example.googoose.data.db.PaymentMethodEntity
 import com.example.googoose.data.db.SettingsEntity
 import com.example.googoose.data.db.StockEntity
 import com.example.googoose.data.db.TodoEntity
@@ -43,6 +44,7 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
     val stock: Flow<List<StockItem>> = db.stockDao().observeAll().map { list -> list.map { it.toDomain() } }
     val todos: Flow<List<TodoItem>> = db.todoDao().observeAll().map { list -> list.map { it.toDomain() } }
     val categories: Flow<List<String>> = db.categoryDao().observeAll().map { list -> list.map { it.name } }
+    val paymentMethods: Flow<List<String>> = db.paymentMethodDao().observeAll().map { list -> list.map { it.name } }
     val settings: Flow<SettingsEntity> = db.settingsDao().observe().map { it ?: defaultSettings() }
 
     private fun defaultSettings() = SettingsEntity(
@@ -50,45 +52,75 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
         currency = "USD",
         language = Language.EN,
         textSize = TextSizePreset.STANDARD,
+        hasOnboarded = false,
     )
 
-    /** Runs once — a fresh database has no settings row yet, so that's the "already seeded" marker. */
-    suspend fun seedIfEmpty() {
-        if (db.settingsDao().get() != null) return
+    /**
+     * Finishes the onboarding screen (business name/language/currency +
+     * Sample-data-vs-empty choice — the Import choice goes through
+     * [restoreAll] instead, via the same ViewModel.importData path Settings
+     * already uses). [businessName] is caller-supplied: OnboardingScreen
+     * passes [SeedData.defaultBusinessName] for the Sample choice and
+     * whatever the user typed for the Empty choice. Default categories
+     * always seed (they're a starter vocabulary, not "fake data"); demo
+     * transactions/stock/todos/payment-method-history only seed when
+     * [seedSampleData] is true.
+     */
+    suspend fun completeOnboarding(businessName: String, currency: String, language: Language, seedSampleData: Boolean) {
         db.withTransaction {
-            db.settingsDao().upsert(defaultSettings())
+            db.settingsDao().upsert(
+                SettingsEntity(
+                    businessName = businessName,
+                    currency = currency,
+                    language = language,
+                    hasOnboarded = true,
+                ),
+            )
             db.categoryDao().insertAll(SeedData.defaultCategories.map { CategoryEntity(name = it) })
-            db.stockDao().insertAll(
-                SeedData.stock.map { s -> StockEntity(name = s.name, qty = s.qty, unit = s.unit, low = s.low) },
-            )
-            db.todoDao().insertAll(
-                SeedData.todos.map { t -> TodoEntity(title = t.title, desc = t.desc, done = t.done) },
-            )
-            db.transactionDao().insertAll(
-                SeedData.transactions.map { s ->
-                    val occurredAt = s.occurredAt()
-                    TransactionEntity(
-                        name = s.name, category = s.category, amount = s.amount, type = s.type,
-                        method = s.method, paid = s.paid, remarks = s.remarks,
-                        occurredAt = occurredAt, createdAt = occurredAt, modifiedAt = occurredAt,
-                    )
-                },
-            )
+            if (seedSampleData) {
+                db.paymentMethodDao().insertAll(
+                    SeedData.transactions.map { it.method }.distinct().map { PaymentMethodEntity(name = it) },
+                )
+                db.stockDao().insertAll(
+                    SeedData.stock.map { s -> StockEntity(name = s.name, qty = s.qty, unit = s.unit, low = s.low) },
+                )
+                db.todoDao().insertAll(
+                    SeedData.todos.map { t -> TodoEntity(title = t.title, desc = t.desc, done = t.done) },
+                )
+                db.transactionDao().insertAll(
+                    SeedData.transactions.map { s ->
+                        val occurredAt = s.occurredAt()
+                        TransactionEntity(
+                            name = s.name, category = s.category, amount = s.amount, type = s.type,
+                            method = s.method, paid = s.paid, remarks = s.remarks,
+                            occurredAt = occurredAt, createdAt = occurredAt, modifiedAt = occurredAt,
+                        )
+                    },
+                )
+            }
         }
     }
 
     // ---- transactions ----
 
-    /** New transactions have no method/paid-status field in the Add sheet — sensible real-world defaults. */
-    suspend fun addTransaction(name: String, category: String, amount: Double, type: TxnType, occurredAt: Long) {
+    suspend fun addTransaction(
+        name: String,
+        category: String,
+        amount: Double,
+        type: TxnType,
+        occurredAt: Long,
+        method: String,
+        paid: Boolean,
+    ) {
         val now = System.currentTimeMillis()
         db.transactionDao().insert(
             TransactionEntity(
                 name = name, category = category, amount = amount, type = type,
-                method = "", paid = true, remarks = "",
+                method = method, paid = paid, remarks = "",
                 occurredAt = occurredAt, createdAt = now, modifiedAt = now,
             ),
         )
+        addPaymentMethodToHistory(method)
     }
 
     suspend fun deleteTransaction(id: Long) {
@@ -120,14 +152,15 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
         db.stockDao().insert(StockEntity(name = name, qty = qty, unit = unit, low = low))
     }
 
-    suspend fun setStockUnit(id: Long, unit: String) {
-        val current = db.stockDao().findById(id) ?: return
-        db.stockDao().update(current.copy(unit = unit))
-    }
-
     suspend fun setStockQty(id: Long, qty: Double) {
         val current = db.stockDao().findById(id) ?: return
         db.stockDao().update(current.copy(qty = qty))
+    }
+
+    /** Detail-page Save — name/quantity/unit/threshold together in one write, unlike the card's delta-based [setStockQty]. */
+    suspend fun updateStockDetails(id: Long, name: String, qty: Double, unit: String, low: Double) {
+        val current = db.stockDao().findById(id) ?: return
+        db.stockDao().update(current.copy(name = name, qty = qty, unit = unit, low = low))
     }
 
     suspend fun removeStock(id: Long) {
@@ -145,6 +178,12 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
         db.todoDao().insert(TodoEntity(title = title, desc = desc, done = false))
     }
 
+    /** Detail-page Save — title/description together, `done` untouched. */
+    suspend fun updateTodo(id: Long, title: String, desc: String) {
+        val current = db.todoDao().findById(id) ?: return
+        db.todoDao().update(current.copy(title = title, desc = desc))
+    }
+
     suspend fun deleteTodo(id: Long) {
         db.todoDao().deleteById(id)
     }
@@ -159,6 +198,18 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
 
     suspend fun removeCategory(name: String) {
         db.categoryDao().deleteByName(name)
+    }
+
+    // ---- payment method history ----
+
+    suspend fun addPaymentMethodToHistory(name: String) {
+        if (name.isNotBlank() && !db.paymentMethodDao().exists(name)) {
+            db.paymentMethodDao().insert(PaymentMethodEntity(name = name))
+        }
+    }
+
+    suspend fun removePaymentMethodFromHistory(name: String) {
+        db.paymentMethodDao().deleteByName(name)
     }
 
     // ---- settings ----
@@ -182,16 +233,22 @@ class GooGooseRepository(private val db: GooGooseDatabase) {
         language: Language,
         textSize: TextSizePreset,
         categories: List<String>,
+        paymentMethods: List<String>,
         stock: List<StockImport>,
         todos: List<TodoImport>,
         transactions: List<TransactionImport>,
     ) {
         db.withTransaction {
             db.settingsDao().upsert(
-                SettingsEntity(businessName = businessName, currency = currency, language = language, textSize = textSize),
+                SettingsEntity(
+                    businessName = businessName, currency = currency, language = language, textSize = textSize,
+                    hasOnboarded = true, // a restore (onboarding's Import choice or Settings' own Import) always completes onboarding
+                ),
             )
             db.categoryDao().clear()
             db.categoryDao().insertAll(categories.map { CategoryEntity(name = it) })
+            db.paymentMethodDao().clear()
+            db.paymentMethodDao().insertAll(paymentMethods.map { PaymentMethodEntity(name = it) })
             db.stockDao().clear()
             db.stockDao().insertAll(stock.map { StockEntity(name = it.name, qty = it.qty, unit = it.unit, low = it.low) })
             db.todoDao().clear()

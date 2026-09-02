@@ -1,5 +1,6 @@
 package com.example.googoose.ui.todo
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,17 +10,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.googoose.data.Strings
 import com.example.googoose.data.model.TodoItem
-import com.example.googoose.ui.components.GhostIconButton
 import com.example.googoose.ui.components.GooGooseCard
 import com.example.googoose.ui.components.PrimaryTextButton
 import com.example.googoose.ui.components.SecondaryButton
@@ -47,28 +47,41 @@ fun TodoTab(state: GooGooseUiState, strings: Strings, viewModel: GooGooseViewMod
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        if (rows.isEmpty()) {
+            item {
+                Text(strings.emptyTodos, style = GooGooseType.bodySmall, color = GooGooseColors.textMuted)
+            }
+        }
         items(rows, key = { it.id }) { todo ->
             TodoCard(
                 todo = todo,
                 strings = strings,
                 onToggle = { viewModel.toggleTodo(todo.id) },
-                onDelete = { viewModel.deleteTodo(todo.id) },
+                onOpenDetail = { viewModel.openTodoDetail(todo.id) },
             )
         }
     }
 }
 
 @Composable
-private fun TodoCard(todo: TodoItem, strings: Strings, onToggle: () -> Unit, onDelete: () -> Unit) {
-    GooGooseCard {
+private fun TodoCard(todo: TodoItem, strings: Strings, onToggle: () -> Unit, onOpenDetail: () -> Unit) {
+    GooGooseCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDetail)) {
         Text(
             todo.title,
             style = GooGooseType.cardTitle,
             // textMuted is text-color-at-55%-alpha, which is exactly the mockup's `opacity:0.55`.
             color = if (todo.done) GooGooseColors.textMuted else GooGooseColors.text,
             textDecoration = if (todo.done) TextDecoration.LineThrough else null,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
-        Text(todo.desc, style = GooGooseType.bodySmall.copy(fontSize = 13.sp), color = GooGooseColors.textMuted)
+        Text(
+            todo.desc,
+            style = GooGooseType.bodySmall.copy(fontSize = 13.sp),
+            color = GooGooseColors.textMuted,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -77,10 +90,6 @@ private fun TodoCard(todo: TodoItem, strings: Strings, onToggle: () -> Unit, onD
                 PrimaryTextButton(strings.doneLabel, onClick = onToggle)
             } else {
                 SecondaryButton(strings.markDone, onClick = onToggle)
-            }
-            // Only completed tasks can be deleted this way — undone ones stay Mark-done-only.
-            if (todo.done) {
-                GhostIconButton(Icons.Outlined.Delete, strings.removeTodo, onClick = onDelete)
             }
         }
     }

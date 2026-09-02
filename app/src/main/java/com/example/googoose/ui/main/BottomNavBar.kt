@@ -102,7 +102,7 @@ private fun NavButton(icon: ImageVector, label: String, selected: Boolean, onCli
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(22.5.dp)) // 18dp × 1.25
         Text(label, style = GooGooseType.tabLabel, color = color)
     }
 }

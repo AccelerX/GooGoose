@@ -1,6 +1,5 @@
 package com.example.googoose.ui.stock
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.googoose.data.Strings
 import com.example.googoose.data.model.StockItem
-import com.example.googoose.ui.components.GhostIconButton
 import com.example.googoose.ui.components.GooGooseCard
 import com.example.googoose.ui.components.GooGooseTextField
 import com.example.googoose.ui.components.SecondaryButton
@@ -60,17 +57,21 @@ fun StockTab(state: GooGooseUiState, strings: Strings, viewModel: GooGooseViewMo
                 SecondaryButton(strings.addItem, onClick = viewModel::openAddStock, leadingIcon = Icons.Outlined.Add)
             }
         }
+        if (state.stock.isEmpty()) {
+            item {
+                Text(strings.emptyStock, style = GooGooseType.bodySmall, color = GooGooseColors.textMuted)
+            }
+        }
         items(state.stock, key = { it.id }) { item ->
             StockCard(
                 item = item,
                 low = item.qty <= item.low,
                 amount = state.stockAmounts[item.id] ?: "1",
                 strings = strings,
-                onUnitChange = { viewModel.setStockUnit(item.id, it) },
                 onAmountChange = { viewModel.setStockAmount(item.id, it) },
                 onIncrease = { viewModel.requestIncrease(item.id) },
                 onDecrease = { viewModel.requestDecrease(item.id) },
-                onRemove = { viewModel.removeStock(item.id) },
+                onOpenDetail = { viewModel.openStockDetail(item.id) },
             )
         }
     }
@@ -82,23 +83,19 @@ private fun StockCard(
     low: Boolean,
     amount: String,
     strings: Strings,
-    onUnitChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit,
-    onRemove: () -> Unit,
+    onOpenDetail: () -> Unit,
 ) {
-    GooGooseCard {
+    GooGooseCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDetail)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(item.name, style = GooGooseType.cardTitle, color = if (low) GooGooseColors.error else GooGooseColors.text)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (low) TagOutline(strings.lowTag)
-                GhostIconButton(Icons.Outlined.Delete, strings.removeItem, onRemove)
-            }
+            if (low) TagOutline(strings.lowTag)
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -110,12 +107,8 @@ private fun StockCard(
                 style = GooGooseType.cardTitle.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
                 color = GooGooseColors.text,
             )
-            GooGooseTextField(
-                value = item.unit,
-                onValueChange = onUnitChange,
-                modifier = Modifier.width(52.dp),
-                textAlign = TextAlign.Center,
-            )
+            // Editing moved to the detail page (tap the card) — display only here now.
+            Text(item.unit, style = GooGooseType.bodySmall, color = GooGooseColors.textMuted)
         }
         Text(
             strings.lowThresholdLabel("${formatQty(item.low)} ${item.unit}"),

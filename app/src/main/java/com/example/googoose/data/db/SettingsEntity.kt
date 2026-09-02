@@ -13,4 +13,6 @@ data class SettingsEntity(
     val currency: String,
     val language: Language,
     val textSize: TextSizePreset = TextSizePreset.STANDARD,
+    /** False only until first-launch onboarding finishes — gates OnboardingScreen vs. the main app in GooGooseApp. */
+    val hasOnboarded: Boolean = false,
 )

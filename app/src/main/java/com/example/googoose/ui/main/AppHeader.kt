@@ -40,7 +40,7 @@ fun AppHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(appName, style = GooGooseType.headerBrand, color = GooGooseColors.text)
+                Text(appName, style = GooGooseType.headerBrand, color = GooGooseColors.accent)
                 GhostIconButton(
                     icon = Icons.Outlined.Settings,
                     contentDescription = strings.settingsTitle,

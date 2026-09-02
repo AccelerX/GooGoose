@@ -117,6 +117,11 @@ fun TransactionsTab(
                 onClear = { viewModel.setDateBeforeFilter(null) },
             )
         }
+        if (state.transactions.isEmpty()) {
+            item {
+                Text(strings.emptyTransactions, style = GooGooseType.bodySmall, color = GooGooseColors.textMuted)
+            }
+        }
         groups.forEach { group ->
             item(key = "header-${group.date}") {
                 Text(

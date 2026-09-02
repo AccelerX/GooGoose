@@ -11,8 +11,9 @@ import androidx.room.TypeConverters
         TodoEntity::class,
         CategoryEntity::class,
         SettingsEntity::class,
+        PaymentMethodEntity::class,
     ],
-    version = 2, // v2: SettingsEntity gained `textSize` — dev-only schema change, fallbackToDestructiveMigration handles it.
+    version = 4, // v4: SettingsEntity gained `hasOnboarded` — dev-only schema change, fallbackToDestructiveMigration handles it.
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -22,4 +23,5 @@ abstract class GooGooseDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao
     abstract fun categoryDao(): CategoryDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun paymentMethodDao(): PaymentMethodDao
 }

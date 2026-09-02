@@ -55,14 +55,15 @@ import com.example.googoose.viewmodel.GooGooseUiState
 import com.example.googoose.viewmodel.GooGooseViewModel
 import kotlinx.coroutines.launch
 
-private val currencyOptions = listOf(
+/** Shared with OnboardingScreen — same currency/language choices in both places. */
+val currencyOptions = listOf(
     "USD" to "USD ($)",
     "EUR" to "EUR (€)",
     "GBP" to "GBP (£)",
     "CAD" to "CAD ($)",
     "CNY" to "CNY (¥)",
 )
-private val languageOptions = listOf(Language.EN to "English", Language.ZH_CN to "简体中文")
+val languageOptions = listOf(Language.EN to "English", Language.ZH_CN to "简体中文")
 
 /**
  * Full-screen Settings overlay, backed by Room via [viewModel] (Phase 2).
@@ -225,8 +226,9 @@ fun SettingsScreen(state: GooGooseUiState, strings: Strings, viewModel: GooGoose
     }
 }
 
+/** Shared with OnboardingScreen. */
 @Composable
-private fun <T> DropdownField(selectedLabel: String, options: List<Pair<T, String>>, onSelect: (T) -> Unit) {
+fun <T> DropdownField(selectedLabel: String, options: List<Pair<T, String>>, onSelect: (T) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier

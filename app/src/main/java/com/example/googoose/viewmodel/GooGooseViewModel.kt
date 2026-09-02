@@ -34,9 +34,11 @@ private data class UiOnlyState(
     val newStockQty: String = "",
     val newStockUnit: String = "",
     val newStockLow: String = "",
+    val stockDetailId: Long? = null,
     val showAddTodo: Boolean = false,
     val newTodoTitle: String = "",
     val newTodoDesc: String = "",
+    val todoDetailId: Long? = null,
     val addingCategory: Boolean = false,
     val newCategoryName: String = "",
     val showSettings: Boolean = false,
@@ -57,10 +59,12 @@ private data class PersistedSnapshot(
     val stock: List<com.example.googoose.data.model.StockItem>,
     val todos: List<com.example.googoose.data.model.TodoItem>,
     val categories: List<String>,
+    val paymentMethods: List<String>,
     val settingsName: String,
     val settingsCurrency: String,
     val language: Language,
     val textSize: TextSizePreset,
+    val hasOnboarded: Boolean,
 )
 
 /**
@@ -73,22 +77,29 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
 
     private val _uiOnly = MutableStateFlow(UiOnlyState())
 
+    // combine() tops out at 5 typed flows — categories+paymentMethods (same List<String> shape) nest into one slot first.
+    private val categoriesAndMethods = combine(repository.categories, repository.paymentMethods) { categories, methods ->
+        categories to methods
+    }
+
     private val persisted = combine(
         repository.transactions,
         repository.stock,
         repository.todos,
-        repository.categories,
+        categoriesAndMethods,
         repository.settings,
-    ) { transactions, stock, todos, categories, settings ->
+    ) { transactions, stock, todos, categoriesAndMethods, settings ->
         PersistedSnapshot(
             transactions = transactions,
             stock = stock,
             todos = todos,
-            categories = categories,
+            categories = categoriesAndMethods.first,
+            paymentMethods = categoriesAndMethods.second,
             settingsName = settings.businessName,
             settingsCurrency = settings.currency,
             language = settings.language,
             textSize = settings.textSize,
+            hasOnboarded = settings.hasOnboarded,
         )
     }
 
@@ -106,11 +117,14 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
             newStockQty = ui.newStockQty,
             newStockUnit = ui.newStockUnit,
             newStockLow = ui.newStockLow,
+            stockDetailItem = ui.stockDetailId?.let { id -> p.stock.find { it.id == id } },
             todos = p.todos,
             showAddTodo = ui.showAddTodo,
             newTodoTitle = ui.newTodoTitle,
             newTodoDesc = ui.newTodoDesc,
+            todoDetailItem = ui.todoDetailId?.let { id -> p.todos.find { it.id == id } },
             categories = p.categories,
+            paymentMethods = p.paymentMethods,
             addingCategory = ui.addingCategory,
             newCategoryName = ui.newCategoryName,
             showSettings = ui.showSettings,
@@ -118,6 +132,7 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
             settingsCurrency = p.settingsCurrency,
             language = p.language,
             textSize = p.textSize,
+            hasOnboarded = p.hasOnboarded,
             importMessage = ui.importMessage,
             showSheet = ui.showSheet,
             sheetType = ui.sheetType,
@@ -148,13 +163,25 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
 
     fun setStockAmount(id: Long, value: String) = updateUi { it.copy(stockAmounts = it.stockAmounts + (id to value)) }
 
-    fun setStockUnit(id: Long, unit: String) {
-        viewModelScope.launch { repository.setStockUnit(id, unit) }
-    }
-
     fun removeStock(id: Long) {
         viewModelScope.launch { repository.removeStock(id) }
-        updateUi { it.copy(stockAmounts = it.stockAmounts - id) }
+        updateUi {
+            it.copy(
+                stockAmounts = it.stockAmounts - id,
+                stockDetailId = if (it.stockDetailId == id) null else it.stockDetailId,
+            )
+        }
+    }
+
+    // ---- Stock item detail (name/quantity/unit/threshold edits + delete live here) ----
+
+    fun openStockDetail(id: Long) = updateUi { it.copy(stockDetailId = id) }
+
+    fun closeStockDetail() = updateUi { it.copy(stockDetailId = null) }
+
+    fun saveStockDetail(id: Long, name: String, qty: Double, unit: String, low: Double) {
+        viewModelScope.launch { repository.updateStockDetails(id, name, qty, unit, low) }
+        updateUi { it.copy(stockDetailId = null) }
     }
 
     fun requestIncrease(id: Long) {
@@ -220,6 +247,7 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
     /** Only completed tasks show a delete affordance in the UI; deletion itself is unconditional here. */
     fun deleteTodo(id: Long) {
         viewModelScope.launch { repository.deleteTodo(id) }
+        updateUi { it.copy(todoDetailId = if (it.todoDetailId == id) null else it.todoDetailId) }
     }
 
     fun openAddTodo() = updateUi { it.copy(showAddTodo = true, newTodoTitle = "", newTodoDesc = "") }
@@ -235,6 +263,17 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
         if (s.newTodoTitle.isBlank()) return
         viewModelScope.launch { repository.addTodo(s.newTodoTitle, s.newTodoDesc) }
         updateUi { it.copy(showAddTodo = false) }
+    }
+
+    // ---- Todo detail (title/description edits + delete live here) ----
+
+    fun openTodoDetail(id: Long) = updateUi { it.copy(todoDetailId = id) }
+
+    fun closeTodoDetail() = updateUi { it.copy(todoDetailId = null) }
+
+    fun saveTodoDetail(id: Long, title: String, desc: String) {
+        viewModelScope.launch { repository.updateTodo(id, title, desc) }
+        updateUi { it.copy(todoDetailId = null) }
     }
 
     // ---- Category chips (shared by Edit transaction) ----
@@ -321,11 +360,14 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
         )
     }
 
-    /** New transactions have no method/paid-status field in the Add sheet — repository applies defaults. */
-    fun addTransaction(name: String, category: String, amount: Double, occurredAt: Long) {
+    fun addTransaction(name: String, category: String, amount: Double, occurredAt: Long, method: String, paid: Boolean) {
         val type = _uiOnly.value.sheetType
-        viewModelScope.launch { repository.addTransaction(name, category, amount, type, occurredAt) }
+        viewModelScope.launch { repository.addTransaction(name, category, amount, type, occurredAt, method, paid) }
         updateUi { it.copy(showSheet = false) }
+    }
+
+    fun removePaymentMethodHistory(name: String) {
+        viewModelScope.launch { repository.removePaymentMethodFromHistory(name) }
     }
 
     // ---- Settings ----
@@ -350,12 +392,18 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
         viewModelScope.launch { repository.setTextSize(preset) }
     }
 
+    /** Onboarding's Sample-data-vs-empty-start choice. The Import choice goes through [importData] instead — same restore path Settings uses. */
+    fun completeOnboarding(businessName: String, currency: String, language: Language, seedSampleData: Boolean) {
+        viewModelScope.launch { repository.completeOnboarding(businessName, currency, language, seedSampleData) }
+    }
+
     /** Full snapshot — transactions/stock/todos/categories/businessName/currency/language. */
     suspend fun buildExportJson(): String {
         val txns = repository.transactions.first()
         val stock = repository.stock.first()
         val todos = repository.todos.first()
         val categories = repository.categories.first()
+        val paymentMethods = repository.paymentMethods.first()
         val settings = repository.settings.first()
 
         val root = JSONObject()
@@ -364,6 +412,7 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
         root.put("language", settings.language.name)
         root.put("textSize", settings.textSize.name)
         root.put("categories", JSONArray(categories))
+        root.put("paymentMethods", JSONArray(paymentMethods))
         root.put(
             "stock",
             JSONArray().apply {
@@ -416,6 +465,9 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
             try {
                 val root = JSONObject(jsonText)
                 val categories = root.getJSONArray("categories").let { arr -> (0 until arr.length()).map { arr.getString(it) } }
+                val paymentMethods = root.optJSONArray("paymentMethods")?.let { arr ->
+                    (0 until arr.length()).map { arr.getString(it) }
+                } ?: emptyList()
                 val stock = root.getJSONArray("stock").let { arr ->
                     (0 until arr.length()).map { i ->
                         val o = arr.getJSONObject(i)
@@ -456,12 +508,13 @@ class GooGooseViewModel(private val repository: GooGooseRepository) : ViewModel(
                     language = Language.valueOf(root.optString("language", "EN")),
                     textSize = TextSizePreset.valueOf(root.optString("textSize", "STANDARD")),
                     categories = categories,
+                    paymentMethods = paymentMethods,
                     stock = stock,
                     todos = todos,
                     transactions = transactions,
                 )
                 updateUi { it.copy(importMessage = strings.importedMsg(fileName)) }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 updateUi { it.copy(importMessage = strings.importError) }
             }
         }
