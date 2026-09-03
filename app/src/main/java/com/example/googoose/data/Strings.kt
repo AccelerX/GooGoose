@@ -204,7 +204,7 @@ val EnStrings = Strings(
 )
 
 val ZhCnStrings = Strings(
-    appName = "GooGoose",
+    appName = "鹅来",
     transactions = "交易", stockTab = "库存", reports = "报表", todoTab = "待办",
     accountBalance = "账户余额", thisMonth = "本月",
     all = "全部", income = "收入", spend = "支出",
