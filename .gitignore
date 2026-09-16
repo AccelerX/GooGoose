@@ -17,5 +17,6 @@ local.properties
 .claude/settings.local.json
 _ds/
 .thumbnail
+/app/release/
 CLAUDE.md
 UI-LOGIC.md
